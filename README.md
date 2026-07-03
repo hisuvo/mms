@@ -72,50 +72,40 @@ Massify is a scalable backend service built with Go that provides REST APIs for 
 - go get github.com/labstack/echo/v5
 - go get github.com/go-playground/validator/v10
 - go get godotenv.com/joho/godotenv
+-
 
 
+```
 ---
 
 # Project Structure
 
 ```text
-massify/
+mms/
 ├── cmd/
-│   └── main.go
-│
-├── configs/
-│
+│   └── main.go                 # Application entry point
 ├── internal/
-│   ├── api/
-│   ├── middleware/
-│   ├── handlers/
-│   ├── services/
-│   ├── repositories/
-│   ├── models/
-│   ├── database/
-│   ├── auth/
-│   └── utils/
-│
-├── pkg/
-│
-├── migrations/
-│
-├── docs/
-│
-├── scripts/
-│
-├── test/
-│
-├── .env.example
-├── Dockerfile
-├── docker-compose.yml
-├── Makefile
-├── go.mod
-├── go.sum
-└── README.md
+│   ├── auth/                   # Authentication logic
+│   ├── config/                 # Configuration management
+│   ├── database/               # Database setup and connections
+│   ├── domain/                 # Domain-driven feature modules
+│   │   ├── bazars/             # Bazar/Expense operations
+│   │   ├── deposits/           # Deposit tracking
+│   │   ├── meals/              # Meal count tracking
+│   │   ├── messes/             # Mess (group) management
+│   │   ├── tenant/             # Tenant-specific logic (handlers, repositories, services, DTOs)
+│   │   └── users/              # User account and profile logic
+│   ├── httpresponse/           # Standardized HTTP API responses
+│   ├── middleware/             # HTTP server middlewares
+│   ├── server/                 # HTTP server bootstrap/setup
+│   └── utils/                  # Utility and helper functions
+├── .env                        # Local environment variables
+├── .gitignore                  # Git ignore file
+├── Makefile                    # Task automation
+├── go.mod                      # Go module dependencies
+├── go.sum                      # Go module checksums
+└── README.md                   # Project documentation
 ```
-
----
 
 # Prerequisites
 
