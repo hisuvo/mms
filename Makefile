@@ -1,5 +1,11 @@
+.PHONY: run
 run:
-	go run cmd/main.go
+	air
 
+.PHONY: build
 build:
-	go build -o ./app cmd/main.go
+	go build -o bin/mms ./cmd
+
+.PHONY: start
+start:
+	go run ./cmd
