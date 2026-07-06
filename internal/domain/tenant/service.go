@@ -2,11 +2,13 @@ package tenant
 
 import (
 	"mms-dbsd/internal/domain/tenant/dto"
-	"time"
 )
 
 type Service interface {
 	CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantResponse, error)
+	FindById(tenantId uint) (*dto.TenantResponse, error)
+	FindByEmail(email string) (*dto.TenantResponse, error)
+	Update(tenantId uint, req dto.UpdateTenantRequest)(*dto.TenantResponse, error)
 }
 
 type service struct {
@@ -29,11 +31,48 @@ func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantRespon
 		return nil, err
 	}
 
-	return &dto.TenantResponse{
-		ID:         uint64(tenant.ID),
-		TenantName: tenant.TenantName,
-		Email:      tenant.Email,
-		SubDomain:  tenant.SubDomain,
-		CreatedAt:  tenant.CreatedAt.Format(time.RFC3339),
-	}, nil
+	return tenant.ToTenantResponse(), nil
+}
+
+func (s *service) FindById(tenantID uint) (*dto.TenantResponse, error) {
+	tenant, err := s.repository.FindByID(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return tenant.ToTenantResponse(), nil
+}
+
+func (s *service) FindByEmail(email string) (*dto.TenantResponse, error) {
+	tenant, err := s.repository.FindByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	return tenant.ToTenantResponse(), nil
+}
+
+func (s *service) Update(tenantId uint, req dto.UpdateTenantRequest) (*dto.TenantResponse, error) {
+
+	tenant,err:=s.repository.FindByID(tenantId)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Email != "" {
+		tenant.Email=req.Email
+	}
+
+	if req.SubDomain != ""{
+		tenant.SubDomain=req.SubDomain
+	}
+
+	if req.TenantName != ""{
+		tenant.TenantName=req.TenantName
+	}
+
+	if err := s.repository.Update(tenant); err != nil {
+		return nil, err
+	}
+
+	return tenant.ToTenantResponse(), nil
+	
 }

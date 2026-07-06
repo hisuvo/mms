@@ -6,7 +6,10 @@ type SuccessResponse struct {
 	Data    any    `json:"data"`
 }
 
-func NewSuccessResponse(response *SuccessResponse) *SuccessResponse {
-	response.Success = true
-	return response
+func NewSuccessResponse(message string, data any) *SuccessResponse {
+	return &SuccessResponse{
+		Success: true,
+		Message: message,
+		Data:    data,
+	}
 }

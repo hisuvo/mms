@@ -13,4 +13,7 @@ func TenantRouter(e *echo.Echo, db *gorm.DB) {
 	h := NewHandler(svc)
 
 	tenantGroup.POST("/tenants", h.CreateTenant)
+	tenantGroup.GET("/tenants/:id", h.FindById)
+	tenantGroup.GET("/tenants/email/:email", h.FindByEmail)
+	tenantGroup.PUT("/tenants/:id", h.Update)
 }

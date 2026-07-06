@@ -1,41 +1,71 @@
 package httpresponse
 
-import (
-	"net/http"
-)
-
-type Error struct {
-	Code    int    `json:"code"`
+type ErrorResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Errors  any    `json:"errors,omitempty"`
 }
 
-func NewErrorResponse(code int, message string, errors any) *Error {
-	return &Error{
-		Code:    code,
+func NewErrorResponse(message string, errs any) *ErrorResponse {
+	return &ErrorResponse{
 		Success: false,
 		Message: message,
-		Errors:  errors,
+		Errors:  errs,
 	}
 }
 
-func ValidationError(errors any) *Error {
-	return NewErrorResponse(http.StatusUnprocessableEntity, "Validation failed", errors)
+func ValidationError(errs any) *ErrorResponse {
+	return NewErrorResponse(
+		"Validation failed",
+		errs,
+	)
 }
 
-func BadRequest(message string) *Error {
-	return NewErrorResponse(http.StatusBadRequest, message, nil)
+func BadRequest(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
 }
 
-func Unauthorized(message string) *Error {
-	return NewErrorResponse(http.StatusUnauthorized, message, nil)
+func Unauthorized(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
 }
 
-func Conflict(message string) *Error {
-	return NewErrorResponse(http.StatusConflict, message, nil)
+func Forbidden(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
 }
 
-func InternalServerError() *Error {
-	return NewErrorResponse(http.StatusInternalServerError, "Internal server error", nil)
+func NotFound(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
+}
+
+func Conflict(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
+}
+
+func TooManyRequests(message string) *ErrorResponse {
+	return NewErrorResponse(
+		message,
+		nil,
+	)
+}
+
+func InternalServerError() *ErrorResponse {
+	return NewErrorResponse(
+		"Internal server error",
+		nil,
+	)
 }

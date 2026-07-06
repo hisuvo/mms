@@ -6,14 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrConflict = errors.New("conflict")
+var(
+	ErrConflict = errors.New("conflict")
+	ErrNotFound = errors.New("tenant not found")
+)
 
 
 type Repository interface {
 	CreateTenant( tenant *Tenant) error
-	// FindByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
+	FindByID(tenantId uint) (*Tenant, error)
+	FindByEmail(email string) (*Tenant, error)
 	// FindByDatabaseName(ctx context.Context, dbName string) (*Tenant, error)
-	// Update(ctx context.Context, tenant *Tenant) error
+	Update(tenant *Tenant) error
 	// Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -43,6 +47,40 @@ func (r *repository) CreateTenant(tenant *Tenant) error {
 
 	if err := r.db.Create(tenant).Error; err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *repository) FindByID(tenantId uint) (*Tenant, error){
+	var tenant Tenant
+
+	err := r.db.First(&tenant, tenantId).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &tenant, nil
+}
+
+func (r *repository) FindByEmail(email string) (*Tenant, error){
+	var tenant Tenant
+
+	err := r.db.Where("email = ?", email).First(&tenant).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &tenant, nil
+}
+
+func (r *repository) Update(tenant *Tenant) error {
+	if err := r.db.Save(tenant).Error; err != nil {
+		return  err
 	}
 
 	return nil
