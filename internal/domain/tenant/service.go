@@ -9,6 +9,8 @@ type Service interface {
 	FindById(tenantId uint) (*dto.TenantResponse, error)
 	FindByEmail(email string) (*dto.TenantResponse, error)
 	Update(tenantId uint, req dto.UpdateTenantRequest)(*dto.TenantResponse, error)
+	FindAll() (*[]dto.TenantResponse, error)
+	Delete(tenantId uint) (*dto.TenantResponse, error)
 }
 
 type service struct {
@@ -75,4 +77,28 @@ func (s *service) Update(tenantId uint, req dto.UpdateTenantRequest) (*dto.Tenan
 
 	return tenant.ToTenantResponse(), nil
 	
+}
+
+func (s *service) FindAll() (*[]dto.TenantResponse, error) {
+	tenants, err := s.repository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	var tenantResponses []dto.TenantResponse
+
+	for _, tenant := range *tenants {
+		tenantResponses = append(tenantResponses, *tenant.ToTenantResponse())
+	}
+	return &tenantResponses, nil
+}
+
+func (s *service) Delete(tenantID uint) (*dto.TenantResponse, error) {
+	t, err := s.repository.Delete(tenantID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: delete tenant database
+	return t.ToTenantResponse(), nil
 }

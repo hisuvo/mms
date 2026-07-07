@@ -16,9 +16,9 @@ type Repository interface {
 	CreateTenant( tenant *Tenant) error
 	FindByID(tenantId uint) (*Tenant, error)
 	FindByEmail(email string) (*Tenant, error)
-	// FindByDatabaseName(ctx context.Context, dbName string) (*Tenant, error)
+	FindAll() (*[]Tenant, error)
 	Update(tenant *Tenant) error
-	// Delete(ctx context.Context, id uuid.UUID) error
+	Delete( tenantId uint) (*Tenant, error)
 }
 
 type repository struct {
@@ -84,4 +84,36 @@ func (r *repository) Update(tenant *Tenant) error {
 	}
 
 	return nil
+}
+
+func (r *repository) FindAll() (*[]Tenant, error){
+	var tenants []Tenant
+
+	err := r.db.Find(&tenants).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &tenants, nil
+}
+
+func (r *repository) Delete(tenantId uint) (*Tenant, error) {
+	var tenant Tenant
+
+	if err := r.db.Where("id = ?", tenantId).First(&tenant).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	if err := r.db.Delete(&tenant).Error; err != nil {
+		return nil, err
+	}
+
+	return &tenant, nil
 }

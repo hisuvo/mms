@@ -102,3 +102,35 @@ func (h *handler) Update(c *echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+func (h *handler) FindAll(c *echo.Context) error {
+	tenants, err := h.service.FindAll()
+
+	if err != nil {
+		return c.JSON(http.StatusNotFound, httpresponse.NotFound(err.Error()))
+	}
+
+	response := httpresponse.NewSuccessResponse("Tenants retrieved successfully", tenants)
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (h *handler) Delete(c *echo.Context) error {
+	idStr := c.Param("id")
+
+	id64, err := strconv.ParseUint(idStr, 10, 32)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, httpresponse.BadRequest("invalid_request_body"))
+	}
+
+	tenant, err := h.service.Delete(uint(id64))
+
+	if err != nil {
+		return c.JSON(http.StatusConflict, httpresponse.Conflict(err.Error()))
+	}
+
+	response := httpresponse.NewSuccessResponse("Tenant deleted successfully", tenant)
+
+	return c.JSON(http.StatusOK, response)
+}
