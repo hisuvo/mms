@@ -3,6 +3,7 @@ package server
 import (
 	"mms-dbsd/internal/config"
 	"mms-dbsd/internal/domain/tenant"
+	"mms-dbsd/internal/domain/users"
 	"mms-dbsd/internal/validator"
 	"net/http"
 
@@ -24,7 +25,7 @@ func Start(db *gorm.DB, cfg *config.Config){
 
 	// All Routes:
 	tenant.TenantRouter(e, db)
-	// users.RegisterRoute(e, db)
+	users.UserRegister(e, db, *cfg)
 	
 
 	port := cfg.PORT

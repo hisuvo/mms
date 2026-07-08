@@ -12,7 +12,7 @@ var(
 )
 
 
-type Repository interface {
+type ITenantRepository interface {
 	CreateTenant( tenant *Tenant) error
 	FindByID(tenantId uint) (*Tenant, error)
 	FindByEmail(email string) (*Tenant, error)
@@ -25,7 +25,7 @@ type repository struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) Repository {
+func NewRepository(db *gorm.DB) ITenantRepository {
 	return &repository{db: db}
 }
 

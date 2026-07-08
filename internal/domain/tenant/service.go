@@ -1,6 +1,9 @@
 package tenant
 
 import (
+	"crypto/rand"
+	"fmt"
+	"math/big"
 	"mms-dbsd/internal/domain/tenant/dto"
 )
 
@@ -14,12 +17,24 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository ITenantRepository
 }
 
-func NewService(repository Repository) Service {
+func NewService(repository ITenantRepository) Service {
 	return &service{repository: repository}
 }
+
+
+
+func generateTenantCode(prefix string) string {
+	n, err := rand.Int(rand.Reader, big.NewInt(999999))
+	if err != nil {
+		return ""
+	}
+	str:=n.String()
+	return prefix + str
+}
+
 
 func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantResponse, error) {
 	tenant := &Tenant{
@@ -32,6 +47,8 @@ func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantRespon
 	if err := s.repository.CreateTenant(tenant); err != nil {
 		return nil, err
 	}
+
+	fmt.Println("generate tenant code --->", generateTenantCode(tenant.TenantName))
 
 	return tenant.ToTenantResponse(), nil
 }

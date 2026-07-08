@@ -12,6 +12,11 @@ type Config struct {
 	DBURL          string
 	JWTSecret      string
 	SecretDuration string
+	SuperAdminName string
+	SuperAdminEmail string
+	SuperAdminPass string
+	SuperAdminPhone string
+	SuperAdminRole string
 }
 
 func mustGetEnv(key string) string {
@@ -34,5 +39,10 @@ func LoadEnv() *Config {
 		DBURL:          mustGetEnv("DB_URL"),
 		JWTSecret:      mustGetEnv("JWT_SECRET"),
 		SecretDuration: mustGetEnv("SECRET_DURATION"),
+		SuperAdminName: mustGetEnv("NAME"),
+		SuperAdminEmail: mustGetEnv("EMAIL"),
+		SuperAdminPhone: mustGetEnv("PHONE"),
+		SuperAdminPass: mustGetEnv("PASSWORD"),
+		SuperAdminRole: mustGetEnv("ROLE"),
 	}
 }
