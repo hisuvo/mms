@@ -14,7 +14,7 @@ func main() {
 	db := database.ConnectDatabse(cfg)
 
 	err:= database.Seed(db, cfg)
-	if err != nil {	
+	if err != nil {
 		log.Fatal("Seed failed:", err)
 	}
 

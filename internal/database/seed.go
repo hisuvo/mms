@@ -1,6 +1,7 @@
 package database
 
 import (
+	"mms-dbsd/internal/auth"
 	"mms-dbsd/internal/config"
 	"mms-dbsd/internal/domain/users"
 
@@ -15,10 +16,15 @@ func Seed(db *gorm.DB, cfg *config.Config) error {
 		return nil
 	}
 
+	hashedPassword, err := auth.NewPassowrdHasher().Hash(cfg.SuperAdminPass)
+	if err != nil {
+		return err
+	}
+
 	user := users.User{
 		UserName: cfg.SuperAdminName,
 		Email:    cfg.SuperAdminEmail,
-		Password: cfg.SuperAdminPass,
+		Password: hashedPassword,
 		Phone:    cfg.SuperAdminPhone,
 		Role:     cfg.SuperAdminRole,
 	}

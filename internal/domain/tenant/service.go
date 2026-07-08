@@ -1,9 +1,8 @@
 package tenant
 
 import (
-	"crypto/rand"
 	"fmt"
-	"math/big"
+	"mms-dbsd/internal/auth"
 	"mms-dbsd/internal/domain/tenant/dto"
 )
 
@@ -18,37 +17,43 @@ type Service interface {
 
 type service struct {
 	repository ITenantRepository
+	hasher auth.PasswordHasher
+	generateCode auth.GenerateCode
 }
 
 func NewService(repository ITenantRepository) Service {
-	return &service{repository: repository}
-}
-
-
-
-func generateTenantCode(prefix string) string {
-	n, err := rand.Int(rand.Reader, big.NewInt(999999))
-	if err != nil {
-		return ""
+	return &service{
+		repository: repository,
+		hasher: auth.NewPassowrdHasher(),
+		generateCode: auth.NewCodeGenerator(),
 	}
-	str:=n.String()
-	return prefix + str
 }
-
 
 func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantResponse, error) {
+
+	hashedPassword, err := s.hasher.Hash(req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantCode, err := s.generateCode.GenerateToken("TEN", 4)
+	if err != nil {
+		return nil, err
+	}
+
 	tenant := &Tenant{
 		TenantName: req.TenantName,
+		TenantCode: tenantCode,
 		Email:      req.Email,
+		Password: hashedPassword,
 		SubDomain:  req.SubDomain,
 	}
 
-	// TODO: create tenant database
 	if err := s.repository.CreateTenant(tenant); err != nil {
 		return nil, err
 	}
 
-	fmt.Println("generate tenant code --->", generateTenantCode(tenant.TenantName))
+	fmt.Println("generate tenant code --->", tenant)
 
 	return tenant.ToTenantResponse(), nil
 }
