@@ -3,12 +3,16 @@ package database
 import (
 	"log"
 
+	"mms-dbsd/internal/domain/tenant"
+	"mms-dbsd/internal/domain/users"
+
 	"gorm.io/gorm"
 )
 
 func AutoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-		// &user.User{},
+		&users.User{},
+		&tenant.Tenant{},
 	)
 
 	if err != nil {

@@ -2,7 +2,9 @@ package server
 
 import (
 	"mms-dbsd/internal/config"
-	"mms-dbsd/internal/utils"
+	"mms-dbsd/internal/domain/tenant"
+	"mms-dbsd/internal/domain/users"
+	"mms-dbsd/internal/validator"
 	"net/http"
 
 	"github.com/labstack/echo/v5"
@@ -14,7 +16,7 @@ func Start(db *gorm.DB, cfg *config.Config){
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
 
-	e.Validator = utils.NewValidator()
+	e.Validator = validator.NewValidator()
 
 	// GET /welcome api
 	e.GET("/",func(c *echo.Context) error {
@@ -22,7 +24,8 @@ func Start(db *gorm.DB, cfg *config.Config){
 	})
 
 	// All Routes:
-	// users.RegisterRoute(e, db)
+	tenant.TenantRouter(e, db)
+	users.UserRegister(e, db, *cfg)
 	
 
 	port := cfg.PORT

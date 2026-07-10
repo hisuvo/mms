@@ -72,50 +72,40 @@ Massify is a scalable backend service built with Go that provides REST APIs for 
 - go get github.com/labstack/echo/v5
 - go get github.com/go-playground/validator/v10
 - go get godotenv.com/joho/godotenv
+-
 
 
+```
 ---
 
 # Project Structure
 
 ```text
-massify/
+mms/
 ├── cmd/
-│   └── main.go
-│
-├── configs/
-│
+│   └── main.go                 # Application entry point
 ├── internal/
-│   ├── api/
-│   ├── middleware/
-│   ├── handlers/
-│   ├── services/
-│   ├── repositories/
-│   ├── models/
-│   ├── database/
-│   ├── auth/
-│   └── utils/
-│
-├── pkg/
-│
-├── migrations/
-│
-├── docs/
-│
-├── scripts/
-│
-├── test/
-│
-├── .env.example
-├── Dockerfile
-├── docker-compose.yml
-├── Makefile
-├── go.mod
-├── go.sum
-└── README.md
+│   ├── auth/                   # Authentication logic
+│   ├── config/                 # Configuration management
+│   ├── database/               # Database setup and connections
+│   ├── domain/                 # Domain-driven feature modules
+│   │   ├── bazars/             # Bazar/Expense operations
+│   │   ├── deposits/           # Deposit tracking
+│   │   ├── meals/              # Meal count tracking
+│   │   ├── messes/             # Mess (group) management
+│   │   ├── tenant/             # Tenant-specific logic (handlers, repositories, services, DTOs)
+│   │   └── users/              # User account and profile logic
+│   ├── httpresponse/           # Standardized HTTP API responses
+│   ├── middleware/             # HTTP server middlewares
+│   ├── server/                 # HTTP server bootstrap/setup
+│   └── utils/                  # Utility and helper functions
+├── .env                        # Local environment variables
+├── .gitignore                  # Git ignore file
+├── Makefile                    # Task automation
+├── go.mod                      # Go module dependencies
+├── go.sum                      # Go module checksums
+└── README.md                   # Project documentation
 ```
-
----
 
 # Prerequisites
 
@@ -279,6 +269,162 @@ Database
 ```
 
 ---
+# Project Architecture
+
+```erDiagram
+
+    TENANTS ||--o{ USERS : has
+    TENANTS ||--o{ SUBSCRIPTIONS : has
+    TENANTS ||--o{ BAZARS : has
+    TENANTS ||--o{ MEALS : has
+    TENANTS ||--o{ DEPOSITS : has
+    TENANTS ||--o{ AUDIT_LOGS : has
+    TENANTS ||--o{ NOTIFICATIONS : has
+
+    ROLES ||--o{ USERS : assigned
+    ROLES ||--o{ ROLE_PERMISSIONS : contains
+
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : mapped
+
+    USERS ||--o{ MEALS : creates
+    USERS ||--o{ DEPOSITS : deposits
+    USERS ||--o{ BAZARS : manages
+    USERS ||--o{ AUDIT_LOGS : performs
+    USERS ||--o{ NOTIFICATIONS : receives
+
+    BAZARS ||--o{ BAZAR_ITEMS : contains
+
+    PLANS ||--o{ SUBSCRIPTIONS : selected
+    SUBSCRIPTIONS ||--o{ PAYMENTS : has
+    PAYMENTS ||--o{ INVOICES : generates
+
+    TENANTS {
+        bigint id PK
+        string name
+        string sub_domain
+        string database_name
+        string email
+        string phone
+        boolean is_active
+    }
+
+    USERS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint role_id FK
+        string name
+        string email
+        string phone
+        string password
+        boolean is_active
+    }
+
+    ROLES {
+        bigint id PK
+        string name
+    }
+
+    PERMISSIONS {
+        bigint id PK
+        string name
+        string slug
+    }
+
+    ROLE_PERMISSIONS {
+        bigint role_id FK
+        bigint permission_id FK
+    }
+
+    PLANS {
+        bigint id PK
+        string name
+        decimal price
+        int duration_days
+        int max_users
+    }
+
+    SUBSCRIPTIONS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint plan_id FK
+        date start_date
+        date end_date
+        string status
+    }
+
+    PAYMENTS {
+        bigint id PK
+        bigint subscription_id FK
+        decimal amount
+        string payment_method
+        string transaction_id
+        string status
+    }
+
+    INVOICES {
+        bigint id PK
+        bigint payment_id FK
+        string invoice_no
+        decimal amount
+        date issued_at
+    }
+
+    MEALS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        date meal_date
+        decimal breakfast
+        decimal lunch
+        decimal dinner
+    }
+
+    DEPOSITS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        decimal amount
+        date deposit_date
+    }
+
+    BAZARS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        date bazar_date
+        decimal total_amount
+    }
+
+    BAZAR_ITEMS {
+        bigint id PK
+        bigint bazar_id FK
+        string item_name
+        decimal quantity
+        decimal unit_price
+        decimal total_price
+    }
+
+    AUDIT_LOGS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        string action
+        string entity
+        bigint entity_id
+        timestamp created_at
+    }
+
+    NOTIFICATIONS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        string title
+        string message
+        boolean is_read
+    }
+```
+
+---
 
 # Development Workflow
 
@@ -344,3 +490,94 @@ GitHub: https://github.com/your-username
 ````
 
 This structure follows common conventions used in production Go backend projects, making it easy for new contributors to get started and for maintainers to document setup, architecture, and operational details.
+
+
+---
+
+Yes. For your **Messify (Mess/Hostel Management System)**, this stack is a very good choice and is used in many production backend applications.
+
+### Recommended Tech Stack
+
+| Technology | Purpose                                                         |
+| ---------- | --------------------------------------------------------------- |
+| Echo       | Build REST APIs and handle HTTP requests                        |
+| GORM       | Interact with the database using Go structs                     |
+| PostgreSQL | Store application data (users, expenses, meals, payments, etc.) |
+| Redis      | Cache data, manage sessions, rate limiting, OTP storage         |
+
+### Where each technology is used in Messify
+
+#### Echo
+
+* Authentication APIs
+* Member management
+* Meal management
+* Expense management
+* Payment APIs
+* Dashboard APIs
+
+#### GORM
+
+* CRUD operations
+* Relationships (`User`, `Tenant`, `Meal`, `Expense`)
+* Transactions
+* Pagination
+* Soft delete
+
+#### PostgreSQL
+
+Store all permanent data:
+
+* Tenants
+* Members
+* Roles
+* Meals
+* Meal rates
+* Expenses
+* Deposits
+* Monthly reports
+* Notifications
+
+#### Redis
+
+Use Redis for temporary or high-speed data:
+
+* JWT token blacklist (logout)
+* OTP verification
+* Email verification codes
+* API rate limiting
+* Frequently accessed dashboard statistics
+* Caching monthly meal rate calculations
+* Background job queues
+
+### Industry Architecture
+
+```text
+Client (Next.js)
+        │
+        ▼
+     Echo API
+        │
+ ┌──────┴────────┐
+ │               │
+ ▼               ▼
+GORM          Redis
+ │               │
+ ▼               │
+PostgreSQL ◄─────┘
+```
+
+### As Messify grows, you can add
+
+* Authentication: JWT
+* Validation: go-playground/validator
+* Migrations: golang-migrate
+* Background jobs: Asynq (with Redis)
+* File storage: S3-compatible storage (e.g., MinIO or AWS S3)
+* Logging: Zap
+* Monitoring: Prometheus + Grafana
+* Containerization: Docker
+* Reverse proxy: Nginx
+* Deployment: Kubernetes (if needed at larger scale)
+
+For your goal of building an **industry-standard SaaS application** like Messify, **Echo + GORM + PostgreSQL + Redis** is a solid, scalable foundation.
