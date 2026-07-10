@@ -9,8 +9,8 @@ import (
 
 type User struct {
 	gorm.Model
-	UserName string `json:"userName" gorm:"size:100;not null"`
-	TenantID uint `json:"tenantID" gorm:"size:100;not null;index"`
+	UserName string `json:"user_name" gorm:"size:100;not null"`
+	TenantID uint `json:"tenant_id" gorm:"size:100;not null;index"`
 	Tenant   tenant.Tenant `gorm:"foreignKey:TenantID"`
 	Phone    string `json:"phone" gorm:"size:20;uniqueIndex"`
 	Email    string `json:"email" gorm:"size:255;not null;uniqueIndex"`
