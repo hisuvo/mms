@@ -4,12 +4,12 @@ import "time"
 
 type UserResponse struct {
 	ID        uint      `json:"id"`
-	UserName  string    `json:"userName"`
-	TenantID  uint    `json:"tenantId"`
+	UserName  string    `json:"user_name"`
+	TenantID  uint      `json:"tenant_id"`
 	Phone     string    `json:"phone"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type LoginResponse struct {

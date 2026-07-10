@@ -23,6 +23,8 @@
 - Environment Variables
 - Logging
 - Project Architecture
+- Database Design (ERD)
+  - Detailed ERD Documentation
 - Development Workflow
 - Contributing
 - License
@@ -269,9 +271,10 @@ Database
 ```
 
 ---
-# Project Architecture
+# Database Design (ERD)
 
-```erDiagram
+```mermaid
+erDiagram
 
     TENANTS ||--o{ USERS : has
     TENANTS ||--o{ SUBSCRIPTIONS : has
@@ -300,16 +303,22 @@ Database
 
     TENANTS {
         bigint id PK
-        string name
+        string tenant_name
+        string tenant_code
+        string phone
+        string email
+        string password
         string sub_domain
         string database_name
-        string email
-        string phone
         boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     USERS {
         bigint id PK
+        string user_name
         bigint tenant_id FK
         bigint role_id FK
         string name
@@ -317,17 +326,26 @@ Database
         string phone
         string password
         boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     ROLES {
         bigint id PK
         string name
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     PERMISSIONS {
         bigint id PK
         string name
         string slug
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     ROLE_PERMISSIONS {
@@ -341,6 +359,9 @@ Database
         decimal price
         int duration_days
         int max_users
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     SUBSCRIPTIONS {
@@ -350,6 +371,9 @@ Database
         date start_date
         date end_date
         string status
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     PAYMENTS {
@@ -359,6 +383,9 @@ Database
         string payment_method
         string transaction_id
         string status
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     INVOICES {
@@ -367,6 +394,9 @@ Database
         string invoice_no
         decimal amount
         date issued_at
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     MEALS {
@@ -377,6 +407,9 @@ Database
         decimal breakfast
         decimal lunch
         decimal dinner
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     DEPOSITS {
@@ -385,14 +418,21 @@ Database
         bigint user_id FK
         decimal amount
         date deposit_date
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     BAZARS {
         bigint id PK
         bigint tenant_id FK
         bigint user_id FK
-        date bazar_date
-        decimal total_amount
+        string bazar_name
+        string bazar_description
+        string tenant_code
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     BAZAR_ITEMS {
@@ -402,6 +442,9 @@ Database
         decimal quantity
         decimal unit_price
         decimal total_price
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     AUDIT_LOGS {
@@ -412,6 +455,8 @@ Database
         string entity
         bigint entity_id
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     NOTIFICATIONS {
@@ -421,8 +466,69 @@ Database
         string title
         string message
         boolean is_read
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 ```
+
+## Detailed ERD Documentation
+
+This section describes how the multi-tenant architecture is structured, how user authorization/roles are managed, and how the operational database modules relate to one another.
+
+### 1. Core Architecture: Multi-Tenancy
+The database operates on a **multi-tenant shared-schema architecture**. This means data from all customer organizations (messes or hostels) is stored in the same database tables, but isolated logically.
+
+* **`TENANTS` table**: This is the root entity. Every hostel or mess group that registers gets a unique record here.
+  * `database_name`: Allows for optional database-per-tenant scaling if needed.
+  * `sub_domain`: Defines the URL access point (e.g., `greenhouse.massify.com`).
+  * `tenant_code`: A clean, unique identifier for reference numbers.
+* **Tenant Isolation**: Almost every operational table (e.g., `USERS`, `SUBSCRIPTIONS`, `MEALS`, `DEPOSITS`, `BAZARS`, `AUDIT_LOGS`, `NOTIFICATIONS`) has a `tenant_id` foreign key. All queries executed by the application must filter by this ID (e.g., `WHERE tenant_id = ?`) to prevent data leakage between messes.
+
+### 2. Access Control Layer: RBAC (Roles & Permissions)
+Security is implemented using **Role-Based Access Control (RBAC)**. Rather than hardcoding authorization logic, users are assigned permissions dynamically.
+
+* **`USERS` table**: Represents borders, cooks, or managers inside a tenant. They belong to a specific tenant (`tenant_id`) and have a single role (`role_id`).
+* **`ROLES` table**: Stores user group classifications (e.g., `"Super Admin"`, `"Mess Manager"`, `"Border"`, `"Cook"`).
+* **`PERMISSIONS` table**: Stores fine-grained application actions identified by a `slug` (e.g., `bazar:add`, `meal:edit`, `deposit:approve`).
+* **`ROLE_PERMISSIONS` table**: A junction table that resolves the many-to-many relationship between `ROLES` and `PERMISSIONS`.
+  * **How it works**: When a user logs in, the application preloads their role and permissions. Before performing an action (like entering a Bazar expense), the middleware checks if the permission slug exists in the user's role permissions collection.
+
+### 3. Subscription & Billing Flow (SaaS Layer)
+This segment is responsible for managing tenant licensing, payment processing, and billing history.
+
+```text
+ PLANS  ──[selected by]──►  SUBSCRIPTIONS  ──[has]──►  PAYMENTS  ──[generates]──►  INVOICES 
+```
+
+1. **`PLANS` table**: Defines pricing structures (e.g., `"Basic Plan"`, price, duration in days, and maximum users).
+2. **`SUBSCRIPTIONS` table**: Tracks which plan a tenant is currently using, along with its activation window (`start_date` to `end_date`).
+3. **`PAYMENTS` table**: Keeps records of payment transactions (e.g., via bKash, SSLCommerz, cards) tied to a specific subscription renewal.
+4. **`INVOICES` table**: A downstream document generated immediately after a successful payment transaction for accounting and taxation records.
+
+### 4. Operational Modules: Mess Transactions
+These tables represent the day-to-day operations of the mess.
+
+#### A. Meals Module (`MEALS` table)
+Tracks daily food consumption for calculating individual user food expenses at the end of the month.
+* A user can have many meal entries (typically one record per day).
+* `breakfast`, `lunch`, and `dinner` are stored as decimals (e.g., `0.5`, `1.0`, `1.5`) because members may consume half-meals or guest-meals.
+
+#### B. Deposits Module (`DEPOSITS` table)
+Tracks the advance payments made by users to fund the mess's shopping.
+* When a border deposits money (e.g., BDT 2000), a record is created here.
+* The system sums these records to compute the user's current **credit balance**.
+
+#### C. Bazar & Expenses Module (`BAZARS` & `BAZAR_ITEMS` tables)
+Tracks the cost of purchasing food items from the local market.
+* **`BAZARS`**: The parent record capturing who went shopping (`user_id`), when (`bazar_date`), and how much they spent (`total_amount`).
+* **`BAZAR_ITEMS`**: The line-item details of the purchase (e.g., 5 kg Rice at BDT 80/kg = BDT 400). It links back to the main bazar trip via `bazar_id`.
+* **Meal Rate Calculation Formula**: At the end of a billing cycle, the system calculates the monthly meal rate:
+  $$\text{Meal Rate} = \frac{\sum(\text{Total Bazar Amounts})}{\sum(\text{All consumed meals})}$$
+
+### 5. Auditability & Communication
+* **`AUDIT_LOGS` table**: Crucial for security and compliance. It logs **who** did **what** to **which resource** (e.g., User 3 edited Meal Record 102). It links to the performer (`user_id`) and the tenant context (`tenant_id`).
+* **`NOTIFICATIONS` table**: Stores system alerts (e.g., "Monthly bill generated", "Bazar limit exceeded") delivered to specific users.
 
 ---
 
