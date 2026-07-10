@@ -1,7 +1,6 @@
 package tenant
 
 import (
-	"fmt"
 	"mms-dbsd/internal/auth"
 	"mms-dbsd/internal/domain/tenant/dto"
 )
@@ -36,7 +35,7 @@ func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantRespon
 		return nil, err
 	}
 
-	tenantCode, err := s.generateCode.GenerateToken("TEN", 4)
+	tenantCode, err := s.generateCode.GenerateToken("TEN", 6)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +51,6 @@ func (s *service) CreateTenant( req *dto.CreateTenantRequest) (*dto.TenantRespon
 	if err := s.repository.CreateTenant(tenant); err != nil {
 		return nil, err
 	}
-
-	fmt.Println("generate tenant code --->", tenant)
 
 	return tenant.ToTenantResponse(), nil
 }

@@ -24,23 +24,22 @@ func NewRegisterService(repo IRegisterRepository, tRepo tenant.ITenantRepository
 }
 
 func (s *registerService) Register(request *dto.RegisterRequest) (*dto.UserResponse, error) {
-	user := &User{
-		UserName: request.UserName,
-		TenantID: request.TenantID,
-		Phone:    request.Phone,
-		Email:    request.Email,
-		Password: request.Password,
-		Role:     request.Role,
-	}
-
 	tenantID, err := strconv.Atoi(request.TenantID)
-
 	if err != nil {
 		return nil, errors.New("invalid tenant ID")
 	}
 
 	if _, err := s.tRepo.FindByID(uint(tenantID)); err != nil {
 		return nil, errors.New("tenant Id " + strconv.Itoa(tenantID) + " not valid for create user")
+	}
+
+	user := &User{
+		UserName: request.UserName,
+		TenantID: uint(tenantID),
+		Phone:    request.Phone,
+		Email:    request.Email,
+		Password: request.Password,
+		Role:     request.Role,
 	}
 
 	if err := s.repo.Register(user); err != nil {

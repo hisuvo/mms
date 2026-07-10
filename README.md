@@ -269,6 +269,162 @@ Database
 ```
 
 ---
+# Project Architecture
+
+```erDiagram
+
+    TENANTS ||--o{ USERS : has
+    TENANTS ||--o{ SUBSCRIPTIONS : has
+    TENANTS ||--o{ BAZARS : has
+    TENANTS ||--o{ MEALS : has
+    TENANTS ||--o{ DEPOSITS : has
+    TENANTS ||--o{ AUDIT_LOGS : has
+    TENANTS ||--o{ NOTIFICATIONS : has
+
+    ROLES ||--o{ USERS : assigned
+    ROLES ||--o{ ROLE_PERMISSIONS : contains
+
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : mapped
+
+    USERS ||--o{ MEALS : creates
+    USERS ||--o{ DEPOSITS : deposits
+    USERS ||--o{ BAZARS : manages
+    USERS ||--o{ AUDIT_LOGS : performs
+    USERS ||--o{ NOTIFICATIONS : receives
+
+    BAZARS ||--o{ BAZAR_ITEMS : contains
+
+    PLANS ||--o{ SUBSCRIPTIONS : selected
+    SUBSCRIPTIONS ||--o{ PAYMENTS : has
+    PAYMENTS ||--o{ INVOICES : generates
+
+    TENANTS {
+        bigint id PK
+        string name
+        string sub_domain
+        string database_name
+        string email
+        string phone
+        boolean is_active
+    }
+
+    USERS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint role_id FK
+        string name
+        string email
+        string phone
+        string password
+        boolean is_active
+    }
+
+    ROLES {
+        bigint id PK
+        string name
+    }
+
+    PERMISSIONS {
+        bigint id PK
+        string name
+        string slug
+    }
+
+    ROLE_PERMISSIONS {
+        bigint role_id FK
+        bigint permission_id FK
+    }
+
+    PLANS {
+        bigint id PK
+        string name
+        decimal price
+        int duration_days
+        int max_users
+    }
+
+    SUBSCRIPTIONS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint plan_id FK
+        date start_date
+        date end_date
+        string status
+    }
+
+    PAYMENTS {
+        bigint id PK
+        bigint subscription_id FK
+        decimal amount
+        string payment_method
+        string transaction_id
+        string status
+    }
+
+    INVOICES {
+        bigint id PK
+        bigint payment_id FK
+        string invoice_no
+        decimal amount
+        date issued_at
+    }
+
+    MEALS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        date meal_date
+        decimal breakfast
+        decimal lunch
+        decimal dinner
+    }
+
+    DEPOSITS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        decimal amount
+        date deposit_date
+    }
+
+    BAZARS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        date bazar_date
+        decimal total_amount
+    }
+
+    BAZAR_ITEMS {
+        bigint id PK
+        bigint bazar_id FK
+        string item_name
+        decimal quantity
+        decimal unit_price
+        decimal total_price
+    }
+
+    AUDIT_LOGS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        string action
+        string entity
+        bigint entity_id
+        timestamp created_at
+    }
+
+    NOTIFICATIONS {
+        bigint id PK
+        bigint tenant_id FK
+        bigint user_id FK
+        string title
+        string message
+        boolean is_read
+    }
+```
+
+---
 
 # Development Workflow
 

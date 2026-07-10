@@ -5,7 +5,7 @@ import "time"
 type UserResponse struct {
 	ID        uint      `json:"id"`
 	UserName  string    `json:"userName"`
-	TenantID  string    `json:"tenantId"`
+	TenantID  uint    `json:"tenantId"`
 	Phone     string    `json:"phone"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`

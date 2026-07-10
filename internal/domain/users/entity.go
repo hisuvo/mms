@@ -1,6 +1,7 @@
 package users
 
 import (
+	"mms-dbsd/internal/domain/tenant"
 	"mms-dbsd/internal/domain/users/dto"
 
 	"gorm.io/gorm"
@@ -8,12 +9,13 @@ import (
 
 type User struct {
 	gorm.Model
-	UserName string `gorm:"size:100;not null"`
-	TenantID string `gorm:"size:100;not null;index"`
-	Phone    string `gorm:"size:20;uniqueIndex"`
-	Email    string `gorm:"size:255;not null;uniqueIndex"`
-	Password string `gorm:"size:255;not null"`
-	Role     string `gorm:"size:50;not null;default:user"`
+	UserName string `json:"userName" gorm:"size:100;not null"`
+	TenantID uint `json:"tenantID" gorm:"size:100;not null;index"`
+	Tenant   tenant.Tenant `gorm:"foreignKey:TenantID"`
+	Phone    string `json:"phone" gorm:"size:20;uniqueIndex"`
+	Email    string `json:"email" gorm:"size:255;not null;uniqueIndex"`
+	Password string `json:"password" gorm:"size:255;not null"`
+	Role     string `json:"role" gorm:"size:50;not null;default:user"`
 }
 
 func (u *User) ToUserResponse() *dto.UserResponse {
